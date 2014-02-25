@@ -27,8 +27,24 @@ class JudgementTableTest extends PHPUnit_Framework_TestCase
     // 戦力比3でダイス目が2の時は引
     $this->assertEquals('引', JudgementTable::judge(3, 2));
 
+    // 戦力比1でダイス目が4の時は負
+    $this->assertEquals('負', JudgementTable::judge(1, 4));
+
+    // 戦力比0でダイス目が4の時は負
+    $this->assertEquals('負', JudgementTable::judge(0, 4));
+
     // 戦力比6でダイス目が6の時は大
     $this->assertEquals('大', JudgementTable::judge(6, 6));
   }
 
+  function testJudgeFull() {
+    // 戦力比0でダイス目が1の時は惨敗
+    $this->assertEquals('惨敗', JudgementTable::judge(0, 1, true));
+
+    // 戦力比3でダイス目が2の時は引き分け
+    $this->assertEquals('引き分け', JudgementTable::judge(3, 2, true));
+
+    // 戦力比6でダイス目が6の時は大勝利
+    $this->assertEquals('大勝利', JudgementTable::judge(6, 6, true));
+  }
 }

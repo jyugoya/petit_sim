@@ -13,7 +13,7 @@ class EventParserTest extends PHPUnit_Framework_TestCase
     $string = "要求タグ：白兵、近距離、詠唱、装甲";
     $sut = new EventParser();
     $sut->parse($string);
-    $rds = $sut->get_rds();
+    $rds = $sut->get_tgt_powers();
     //print_r($rds);
     $this->assertEquals(-1, $rds['白兵']);
     $this->assertEquals(-1, $rds['近距離']);
@@ -27,7 +27,7 @@ class EventParserTest extends PHPUnit_Framework_TestCase
     $string .= "E＊戦力：白兵１５、近距離２１、詠唱２４、装甲３０";
     $sut = new EventParser();
     $sut->parse($string);
-    $rds = $sut->get_rds();
+    $rds = $sut->get_tgt_powers();
 
     $this->assertEquals(15, $rds['白兵']);
     $this->assertEquals(21, $rds['近距離']);
@@ -52,7 +52,7 @@ class EventParserTest extends PHPUnit_Framework_TestCase
     $string = "必要勝利数：白兵８、近距離３、詠唱１、装甲３";
     $sut = new EventParser();
     $sut->parse($string);
-    $srs = $sut->get_srs();
+    $srs = $sut->get_req_succs();
     //print_r($srs);
 
     $this->assertEquals(8, $srs['白兵']);
@@ -75,7 +75,7 @@ EOS;
     $sut = new EventParser();
     $sut->parse($string);
 
-    $rds = $sut->get_rds();
+    $rds = $sut->get_tgt_powers();
     //print_r($rds);
     $this->assertEquals(5, $rds['外交戦']);
 

@@ -14,22 +14,65 @@ function mb_trim( $string )
 
 class EventParser {
 
-  private $rds_ = array(); // 要求タグと要求戦力
-  private $dices_ = array(); // ダイス目列
-  private $srs_ = array(); // タグの必要勝利数
+  private $tgt_powers_ = array(); // タグごとの対象戦力(Target Power)
+  private $req_succs_ = array();  // タグごとの必要勝利数(Required Successes)
+  private $dices_ = array();      // ダイス目列(Dice Sequence)
 
-  public function get_rds() {
-    return $this->rds_;
+  public function get_tgt_powers() {
+    return $this->tgt_powers_;
   }
 
   public function get_dices() {
     return $this->dices_;
   }
 
-  public function get_srs() {
-    return $this->srs_;
+  public function get_req_succs() {
+    return $this->req_succs_;
   }
 
+
+  // タグ列の切り出し(parse メソッドで使用)
+  private function parse_tags(&$tags, $line) {
+    mb_regex_encoding("UTF-8");
+    preg_match('/要求タグ：(.*)/u',$line,$matches);
+    //print_r($matches);
+    if ($matches) {
+      $tags = mb_split('、', $matches[1]);
+      //print_r($tags);
+    }
+  }
+
+  // 戦力列の切り出し(parse メソッドで使用)
+  private function parse_powers(&$powers, $line) {
+    mb_regex_encoding("UTF-8");
+    preg_match('/E＊戦力：(.*)/u',$line,$matches);
+    if ($matches) {
+      $powers = mb_split('、', $matches[1]);
+    }
+  }
+
+  // 必要勝利数列の切り出し(parse メソッドで使用)
+  private function parse_snums(&$snums, $line) {
+    mb_regex_encoding("UTF-8");
+    preg_match('/必要勝利数：(.*)/u',$line,$matches);
+    if ($matches) {
+      $snums = mb_split('、', $matches[1]);
+    }
+  }
+
+  private function parse_dices(&$dices, $line) {
+    // 固定ダイス列の切り出し
+    preg_match('/ダイス出目は固定で、(.*)である/u',$line,$matches);
+    // 先に全角→半角変換
+    if ($matches) {
+      $d_str = mb_convert_kana($matches[1],'a',"UTF-8");
+      //echo $d_str;
+      $this->dices_ = mb_split('、', $d_str);
+      //print_r($this->dices_);
+    }
+  }
+
+  // 解析器本体
   public function parse($string) {
     //echo mb_detect_encoding($string);
     mb_regex_encoding("UTF-8");
@@ -40,36 +83,11 @@ class EventParser {
     $snums = array();
     foreach ($lines as $line) {
       $line = mb_trim($line);
-      // タグ列の切り出し
-      preg_match('/要求タグ：(.*)/u',$line,$matches);
-      //print_r($matches);
-      if ($matches) {
-        $tags = mb_split('、', $matches[1]);
-        //print_r($tags);
-      }
 
-      // 戦力列の切り出し
-      preg_match('/E＊戦力：(.*)/u',$line,$matches);
-      if ($matches) {
-        $powers = mb_split('、', $matches[1]);
-      }
-
-      // 必要勝利数列の切り出し
-      preg_match('/必要勝利数：(.*)/u',$line,$matches);
-      if ($matches) {
-        $snums = mb_split('、', $matches[1]);
-      }
-
-      // 固定ダイス列の切り出し
-      preg_match('/ダイス出目は固定で、(.*)である/u',$line,$matches);
-      // 先に全角→半角変換
-      if ($matches) {
-        $d_str = mb_convert_kana($matches[1],'a',"UTF-8");
-        //echo $d_str;
-        $this->dices_ = mb_split('、', $d_str);
-        //print_r($this->dices_);
-      }
-
+      $this->parse_tags($tags, $line); // $tags は参照渡し
+      $this->parse_powers($powers, $line); // $powers は参照渡し
+      $this->parse_snums($snums, $line); // $snums は参照渡し
+      $this->parse_dices($dices, $line); // $dices は参照渡し
     }
 
     //print_r($tags);
@@ -79,8 +97,8 @@ class EventParser {
     // 必要勝利数初期値は-1(不明)
     foreach ($tags as $tag) {
       //print $tag . ",";
-      $this->rds_[$tag] = -1;
-      $this->srs_[$tag] = -1;
+      $this->tgt_powers_[$tag] = -1;
+      $this->req_succs_[$tag] = -1;
     }
 
     foreach ($powers as $power) {
@@ -91,7 +109,7 @@ class EventParser {
       if ($matches) {
         //print_r($matches);
         $tag = $matches[1];
-        $this->rds_[$tag] = $matches[2];
+        $this->tgt_powers_[$tag] = $matches[2];
       }
     }
 
@@ -103,7 +121,7 @@ class EventParser {
       if ($matches) {
         //print_r($matches);
         $tag = $matches[1];
-        $this->srs_[$tag] = $matches[2];
+        $this->req_succs_[$tag] = $matches[2];
       }
     }
   }

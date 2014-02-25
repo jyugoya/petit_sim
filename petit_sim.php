@@ -1,45 +1,81 @@
-﻿<?php
-require_once "RequestData.php";
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<head><title>簡易イベントシミュレータ</title></head>
+<body>
 
-// 判定表
+<p>簡易イベントシミュレータ</p>
 
+<?php
+require_once "EventParser.php";
+require_once "JudgementTable.php";
 
-// タグ列の切り出し
-$string = "要求タグ：白兵、近距離、詠唱、装甲";
-preg_match('/要求タグ：(.*)/',$string,$matches);
-//print_r($matches);
-$tags = explode('、', $matches[1]);
-//print_r($tags);
+$bg_cls = array(
+  '大' => '#33ffff',
+  '勝' => '#99ff99',
+  '引' => '#ffff99',
+  '負' => '#ffcc66',
+  '惨' => '#ff99cc',
+);
 
-// 戦力列の切り出し
-$string = "E＊戦力：白兵１５、近距離２１、詠唱２４、装甲３０";
-preg_match('/E＊戦力：(.*)/',$string,$matches);
-$powers = explode('、', $matches[1]);
-//print_r($powers);
+if (isset($_POST['event_text'])) {
+  $event_text = $_POST['event_text'];
+  $ep = new EventParser();
+  $ep->parse($event_text);
 
-// 固定ダイス列の切り出し
-$string = "・ダイス出目は固定で、１、３、５、２、６、６、６、２、１、３である。";
-preg_match('/ダイス出目は固定で、(.*)である/',$string,$matches);
-// 先に全角→半角変換
-$d_str = mb_convert_kana($matches[1],'a',"UTF-8");
-//echo $d_str;
-$dices = explode('、', $d_str);
-//print_r($dices);
+  $dices = $ep->get_dices();
+  $rds = $ep->get_tgt_powers();
+  $rd_keys = array_keys($rds);
+  $srs = $ep->get_req_succs();
 
-// 要求データに変換
-$rds = array();
-foreach ($tags as $tag) {
-  foreach ($powers as $power) {
-    $pattern = '/' . $tag  . '(.*)/';
-    preg_match($pattern,$power,$matches);
-    if ($matches) {
-      //print_r($matches);
-      $p_val = mb_convert_kana($matches[1],'a',"UTF-8");
-      //echo $tag;
-      //echo $p_val;
-      $rds[] = new RequestData($tag, $p_val);
-    }
+  print "<p><table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">";
+  print "<tr align=\"center\">";
+  print "<th>戦力比</th>";
+  foreach ($rd_keys as $key) {
+    print "<th>" . $key . "</th>";
   }
+  foreach ($dices as $dice) {
+    print "<th>" . $dice . "</th>";
+  }
+  print "</tr>";
+
+  for ($i=6;$i>-1;$i--) {
+    print "<tr align=\"center\">";
+    print "<td>$i</td>";
+    foreach ($rd_keys as $key) {
+      print "<td>" . $rds[$key]*$i . "</td>";
+    }
+    foreach ($dices as $dice) {
+      $r = JudgementTable::judge($i,$dice);
+      print "<td bgcolor=\"$bg_cls[$r]\">";
+      print $r;
+      //print "(" . $i . ", " . $dice . ")";
+      print "</td>";
+    }
+    print "</tr>";
+  }
+
+  print "<tr align=\"center\">";
+  print "<th>必要勝利数</th>";
+  foreach ($rd_keys as $key) {
+    print "<th>" . $srs[$key] . "</th>";
+  }
+  foreach ($dices as $dice) {
+    print "<th>" . "&nbsp;" . "</th>";
+  }
+  print "</tr>";
+
+  print "</table></p>";
+
 }
-//print_r($rds);
+
 ?>
+<p>
+<form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
+<textarea name="event_text" rows="16" cols="80">
+<?php print $event_text; ?>
+</textarea><br><br>
+<input type="submit" name="submit" value="解析する">
+</form>
+</p>
+
+</body></html>
