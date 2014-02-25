@@ -3,8 +3,11 @@
 <head><title>簡易イベントシミュレータ</title></head>
 <body>
 
-<p>簡易イベントシミュレータ</p>
-
+<h1>簡易イベントシミュレータ</h1>
+<hr/>
+[<a href="./">迷宮競技会イベント一覧に戻る</a>]
+<hr/>
+<a name="top"/>
 <?php
 require_once "EventParser.php";
 require_once "JudgementTable.php";
@@ -17,8 +20,38 @@ $bg_cls = array(
   '惨' => '#ff99cc',
 );
 
+$ev_dir = './events/';
+$ev_text_prefix = 'ev_text_';
+
+// イベント文字列（初期値は空）
+$event_text ="";
+
+// GET引数でイベントIDを指定された場合そのファイルを読み込んでevent_textにセットする
+if (isset($_GET['evid'])) {
+  $evid = $_GET['evid'];
+  // .と/の除去
+  $chars = array( '.', '/' );
+  $evid = str_replace($chars, "", $evid);
+
+  $ev_file = $ev_dir . $ev_text_prefix . $evid . ".txt";
+  // print $ev_file . "<br/>";
+  if (file_exists($ev_file)) {
+    $event_text = file_get_contents ($ev_file);
+  } else {
+    // ファイルがない場合はそのイベントIDのデータは存在しない旨表示
+    print "<p>イベントID：" . $evid . "のデータは登録されていません。<br/>";
+    print "お手数をおかけしますが、手動で入力お願いします。</p>";
+  }
+}
+
+// POSTで
 if (isset($_POST['event_text'])) {
   $event_text = $_POST['event_text'];
+  // HTMLエスケープくらいはしておく
+  $event_text = htmlspecialchars($event_text);
+}
+
+if (!empty($event_text)) {
   $ep = new EventParser();
   $ep->parse($event_text);
 
@@ -53,16 +86,19 @@ if (isset($_POST['event_text'])) {
     print "</tr>";
   }
 
-  print "<tr align=\"center\">";
-  print "<th>必要勝利数</th>";
-  foreach ($rd_keys as $key) {
-    print "<th>" . $rds[$key]->get_snum() . "</th>";
+  foreach ($rd_keys as $key1) {
+    print "<tr align=\"center\">";
+    print "<td>必要勝利数</td>";
+    foreach ($rd_keys as $key2) {
+      print "<td>";
+      print $key1==$key2 ? $rds[$key1]->get_snum() : "&nbsp;";
+      print "</td>";
+    }
+    foreach ($dices as $dice) {
+      print "<td>" . "&nbsp;" . "</td>";
+    }
+    print "</tr>";
   }
-  foreach ($dices as $dice) {
-    print "<th>" . "&nbsp;" . "</th>";
-  }
-  print "</tr>";
-
   print "</table></p>";
 
 }
@@ -70,11 +106,16 @@ if (isset($_POST['event_text'])) {
 ?>
 <p>
 <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
+<input type="submit" name="submit" value="解析する">
+<br><br>
 <textarea name="event_text" rows="16" cols="80">
 <?php print $event_text; ?>
-</textarea><br><br>
-<input type="submit" name="submit" value="解析する">
+</textarea>
 </form>
 </p>
 
+<hr/>
+[<a href="#top">先頭に戻る</a>]
+[<a href="./">迷宮競技会イベント一覧に戻る</a>]
+<hr/>
 </body></html>
