@@ -23,9 +23,8 @@ if (isset($_POST['event_text'])) {
   $ep->parse($event_text);
 
   $dices = $ep->get_dices();
-  $rds = $ep->get_tgt_powers();
+  $rds = $ep->get_rds();
   $rd_keys = array_keys($rds);
-  $srs = $ep->get_req_succs();
 
   print "<p><table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">";
   print "<tr align=\"center\">";
@@ -42,7 +41,7 @@ if (isset($_POST['event_text'])) {
     print "<tr align=\"center\">";
     print "<td>$i</td>";
     foreach ($rd_keys as $key) {
-      print "<td>" . $rds[$key]*$i . "</td>";
+      print "<td>" . $rds[$key]->get_power()*$i . "</td>";
     }
     foreach ($dices as $dice) {
       $r = JudgementTable::judge($i,$dice);
@@ -57,7 +56,7 @@ if (isset($_POST['event_text'])) {
   print "<tr align=\"center\">";
   print "<th>必要勝利数</th>";
   foreach ($rd_keys as $key) {
-    print "<th>" . $srs[$key] . "</th>";
+    print "<th>" . $rds[$key]->get_snum() . "</th>";
   }
   foreach ($dices as $dice) {
     print "<th>" . "&nbsp;" . "</th>";
