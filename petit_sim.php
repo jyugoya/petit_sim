@@ -23,7 +23,7 @@ $bg_cls = array(
 
 $ev_dir = './events/';
 $ev_text_prefix = 'ev_text_';
-$ac_text_prefix = 'sd_text_'; // 行動サンプルデータ
+$ac_text_prefix = 'ac_text_'; // 行動サンプルデータ
 
 // イベント文字列（初期値は空）
 $event_text ="";
@@ -122,7 +122,10 @@ if (!empty($event_text)) {
     $lines = mb_split('\n', $action_text);
     $actions = array();
     foreach ($lines as $line) {
-      $actions[] = new PCAction($line);
+      preg_match('/([^【】]*)【([^：:]*)[：:]([^：:]*)[：:]([^：:]*)[：:]([^：:]*)[：:]([^：:]*)】/u', $line, $matches);
+      if ($matches) {
+        $actions[] = new PCAction($matches[1],$matches[2],$matches[3],$matches[4],$matches[5],$matches[6]);
+      }
     }
     //print_r($actions);
 
@@ -168,7 +171,7 @@ if (!empty($event_text)) {
 <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
 <input type="submit" name="submit" value="解析する">
 <br><br>
-現有戦力：<br/>
+現有戦力： ※現状ランクによる回数制限および合算には対応してません<br/>
 <textarea name="action_text" rows="4" cols="80">
 <?php print $action_text; ?>
 </textarea>
