@@ -100,6 +100,44 @@ class EventParserTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(3, $dices[9]);
   }
 
+  public function testResultsParse1() {
+    $string =<<<EOS
+大勝利時の効果：２勝利を得る。
+勝利時の効果：１勝利を得る。
+引き分け時の効果：なし
+敗北時の効果：－１勝利を得る。
+惨敗時の効果：－２勝利を得る。
+EOS;
+    $sut = new EventParser();
+    $sut->parse($string);
+    $results = $sut->get_results();
+
+    $this->assertEquals(2, $results['大']);
+    $this->assertEquals(1, $results['勝']);
+    $this->assertEquals(0, $results['引']);
+    $this->assertEquals(-1, $results['負']);
+    $this->assertEquals(-2, $results['惨']);
+  }
+
+  public function testResultsParse2() {
+    $string =<<<EOS
+大勝利時の効果：５勝利を得る。
+勝利時の効果：１勝利を得る。
+引き分け時の効果：パーティの中から１名死亡
+敗北時の効果：パーティ全滅、全員死亡
+惨敗時の効果：パーティ全滅、全員死亡
+EOS;
+    $sut = new EventParser();
+    $sut->parse($string);
+    $results = $sut->get_results();
+
+    $this->assertEquals(5, $results['大']);
+    $this->assertEquals(1, $results['勝']);
+    $this->assertEquals('D1', $results['引']);
+    $this->assertEquals('DA', $results['負']);
+    $this->assertEquals('DA', $results['惨']);
+  }
+
   public function testAll() {
     $string =<<<EOS
 要求タグ：オペレート、攻撃機会、治療、外交戦

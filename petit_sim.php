@@ -11,6 +11,7 @@
 <?php
 require_once "EventParser.php";
 require_once "JudgementTable.php";
+require_once "PCAction.php";
 
 $bg_cls = array(
   '大' => '#33ffff',
@@ -22,6 +23,7 @@ $bg_cls = array(
 
 $ev_dir = './events/';
 $ev_text_prefix = 'ev_text_';
+$ac_text_prefix = 'sd_text_'; // 行動サンプルデータ
 
 // イベント文字列（初期値は空）
 $event_text ="";
@@ -34,6 +36,7 @@ if (isset($_GET['evid'])) {
   $evid = str_replace($chars, "", $evid);
 
   $ev_file = $ev_dir . $ev_text_prefix . $evid . ".txt";
+  $ac_file = $ev_dir . $ac_text_prefix . $evid . ".txt";
   // print $ev_file . "<br/>";
   if (file_exists($ev_file)) {
     $event_text = file_get_contents ($ev_file);
@@ -42,13 +45,26 @@ if (isset($_GET['evid'])) {
     print "<p>イベントID：" . $evid . "のデータは登録されていません。<br/>";
     print "お手数をおかけしますが、手動で入力お願いします。</p>";
   }
+
+  if (file_exists($ac_file)) {
+    $action_text = file_get_contents ($ac_file);
+  } else {
+    // ファイルがない場合はそのイベントIDのデータは存在しない旨表示
+    $action_text = "ＰＣ名【行動名:ランク:タグ:戦力：リスク】";
+  }
 }
 
-// POSTで
+// POSTで来た時の処理
 if (isset($_POST['event_text'])) {
   $event_text = $_POST['event_text'];
   // HTMLエスケープくらいはしておく
   $event_text = htmlspecialchars($event_text);
+}
+
+if (isset($_POST['action_text'])) {
+  $action_text = $_POST['action_text'];
+  // HTMLエスケープくらいはしておく
+  $action_text = htmlspecialchars($action_text);
 }
 
 if (!empty($event_text)) {
@@ -58,6 +74,7 @@ if (!empty($event_text)) {
   $dices = $ep->get_dices();
   $rds = $ep->get_rds();
   $rd_keys = array_keys($rds);
+  $results = $ep->get_results();
 
   print "<p><table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">";
   print "<tr align=\"center\">";
@@ -99,15 +116,64 @@ if (!empty($event_text)) {
     }
     print "</tr>";
   }
-  print "</table></p>";
 
+  if(!empty($action_text)) {
+    mb_regex_encoding("UTF-8");
+    $lines = mb_split('\n', $action_text);
+    $actions = array();
+    foreach ($lines as $line) {
+      $actions[] = new PCAction($line);
+    }
+    //print_r($actions);
+
+    foreach ($actions as $action) {
+      foreach ($rd_keys as $key1) {
+        if ($key1 == $action->get_tag()) {
+          print "<tr align=\"center\">";
+          print "<td>" . $action->get_owner() . "</td>";
+          $ratio = (int) ($action->get_power() / $rds[$key1]->get_power());
+          foreach ($rd_keys as $key2) {
+            print "<td>";
+            print $key1==$key2 ? $action->get_power() . " (" . $ratio . "倍)" : "&nbsp;";
+            print "</td>";
+          }
+          foreach ($dices as $dice) {
+            print "<td>";
+            $ratio = $ratio > 6 ? 6 : $ratio;
+            print $results[JudgementTable::judge($ratio, $dice)];
+            print "</td>";
+          }
+          print "</tr>";
+        }
+      }
+    }
+  }
+
+  print "</table></p>";
 }
 
 ?>
+
+<p>
+大：<?php print $results['大'] ?>
+勝：<?php print $results['勝'] ?>
+引：<?php print $results['引'] ?>
+負：<?php print $results['負'] ?>
+惨：<?php print $results['惨'] ?>
+<br/>
+数値は獲得勝利数、D1は1名死亡、DAは全滅の意味です。
+</p>
+
 <p>
 <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
 <input type="submit" name="submit" value="解析する">
 <br><br>
+現有戦力：<br/>
+<textarea name="action_text" rows="4" cols="80">
+<?php print $action_text; ?>
+</textarea>
+<br><br>
+イベント記述：<br/>
 <textarea name="event_text" rows="16" cols="80">
 <?php print $event_text; ?>
 </textarea>

@@ -21,12 +21,19 @@ class EventParser {
   // ダイス目のリスト
   private $dices_ = array();      // ダイス目列(Dice Sequence)
 
+  // 判定結果の表
+  private $results_ = array();
+
   public function get_rds() {
     return $this->rds_;
   }
 
   public function get_dices() {
     return $this->dices_;
+  }
+
+  public function get_results() {
+    return $this->results_;
   }
 
 
@@ -46,7 +53,8 @@ class EventParser {
       $this->parse_tags($tags, $line); // $tags は参照渡し
       $this->parse_powers($powers, $line); // $powers は参照渡し
       $this->parse_snums($snums, $line); // $snums は参照渡し
-      $this->parse_dices($dices, $line); // $dices は参照渡し
+      $this->parse_dices($line);
+      $this->parse_results($line);
     }
 
     // タグごとにRequestDataを作成
@@ -128,7 +136,7 @@ class EventParser {
   }
 
   // 固定ダイス列の切り出し(parse メソッドで使用)
-  private function parse_dices(&$dices, $line) {
+  private function parse_dices($line) {
     mb_regex_encoding("UTF-8");
     preg_match('/ダイス出目は固定で、(.*)である/u',$line,$matches);
     // 先に全角→半角変換
@@ -138,6 +146,32 @@ class EventParser {
     }
   }
 
-
+  // 結果列の切り出し(parse メソッドで使用)
+  private function parse_results($line) {
+    mb_regex_encoding("UTF-8");
+    // とりあえず先に全角数字を半角へ
+    $line = mb_convert_kana($line,'a',"UTF-8");
+    //print_r($line);
+    $keys = array ( '大勝利' => '大', '勝利' => '勝', '引き分け' => '引', '敗北' => '負', '惨敗' => '惨' );
+    preg_match('/^(大勝利|勝利|引き分け|敗北|惨敗)時の効果:(-?\d+)勝利を得る/u',$line,$matches);
+    if ($matches) { 
+      $this->results_[$keys[$matches[1]]] = $matches[2];
+    }
+    preg_match('/^(大勝利|勝利|引き分け|敗北|惨敗)時の効果:なし/u',$line,$matches);
+    if ($matches) {
+      //print_r($matches);
+      $this->results_[$keys[$matches[1]]] = 0;
+    }
+    preg_match('/^(大勝利|勝利|引き分け|敗北|惨敗)時の効果:パーティの中から(\d+)名死亡/u',$line,$matches);
+    if ($matches) {
+      //print_r($matches);
+      $this->results_[$keys[$matches[1]]] = 'D' . $matches[2];
+    }
+    preg_match('/^(大勝利|勝利|引き分け|敗北|惨敗)時の効果:パーティ全滅、全員死亡/u',$line,$matches);
+    if ($matches) {
+      //print_r($matches);
+      $this->results_[$keys[$matches[1]]] = 'DA';
+    }
+  }
 }
 ?>
