@@ -24,9 +24,12 @@ $bg_cls = array(
 $ev_dir = './events/';
 $ev_text_prefix = 'ev_text_';
 $ac_text_prefix = 'ac_text_'; // 行動サンプルデータ
+$def_ev_file = $ev_dir . $ev_text_prefix . "DEFAULT.txt";
 
 // イベント文字列（初期値は空）
 $event_text ="";
+// 行動文字列（初期値は汎用）
+$action_text = "ＰＣ名【行動名:ランク:任意のタグ:戦力：リスク】";
 
 // GET引数でイベントIDを指定された場合そのファイルを読み込んでevent_textにセットする
 if (isset($_GET['evid'])) {
@@ -43,16 +46,19 @@ if (isset($_GET['evid'])) {
   } else {
     // ファイルがない場合はそのイベントIDのデータは存在しない旨表示
     print "<p>イベントID：" . $evid . "のデータは登録されていません。<br/>";
-    print "お手数をおかけしますが、手動で入力お願いします。</p>";
+    print "お手数をおかけしますが、手動で入力お願いします。";
   }
 
   if (file_exists($ac_file)) {
     $action_text = file_get_contents ($ac_file);
-  } else {
-    // ファイルがない場合はそのイベントIDのデータは存在しない旨表示
-    $action_text = "ＰＣ名【行動名:ランク:タグ:戦力：リスク】";
   }
 }
+
+if (empty($event_text) && file_exists($def_ev_file)) {
+   print "デフォルトの値を随時書き換えてください。";
+   $event_text = file_get_contents ($def_ev_file);
+}
+print "</p>";
 
 // POSTで来た時の処理
 if (isset($_POST['event_text'])) {
