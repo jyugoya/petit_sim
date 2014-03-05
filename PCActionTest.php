@@ -20,5 +20,11 @@ class PCActionTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(38, $sut->get_power());
     $this->assertEquals(3, $sut->get_risk());
   }
+
+  public function testGetForm() {
+    $sut = new PCAction("結城由羅","結城由羅のオペレート",1000,"オペレート",38,3);
+
+    $this->assertEquals("結城由羅【結城由羅のオペレート:1000:オペレート:38:3】", $sut->get_form());
+  }
 }
 ?>

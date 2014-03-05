@@ -30,6 +30,8 @@ $def_ev_file = $ev_dir . $ev_text_prefix . "DEFAULT.txt";
 $event_text ="";
 // 行動文字列（初期値は汎用）
 $action_text = "ＰＣ名【行動名:ランク:任意のタグ:戦力：リスク】";
+// 行動結果列（初期値は空）
+$action_output = "";
 
 // GET引数でイベントIDを指定された場合そのファイルを読み込んでevent_textにセットする
 if (isset($_GET['evid'])) {
@@ -141,15 +143,26 @@ if (!empty($event_text)) {
           print "<tr align=\"center\">";
           print "<td>" . $action->get_owner() . "</td>";
           $ratio = (int) ($action->get_power() / $rds[$key1]->get_power());
+          $action_str = $action->get_power() . " (" . $ratio . "倍)";
           foreach ($rd_keys as $key2) {
             print "<td>";
-            print $key1==$key2 ? $action->get_power() . " (" . $ratio . "倍)" : "&nbsp;";
+            print $key1==$key2 ? $action_str : "&nbsp;";
             print "</td>";
           }
+          $count = 1;
           foreach ($dices as $dice) {
-            print "<td>";
             $ratio = $ratio > 6 ? 6 : $ratio;
-            print $results[JudgementTable::judge($ratio, $dice)];
+            $judge = JudgementTable::judge($ratio, $dice);
+            $rank = $count * $action->get_rank();
+            $count++;
+            if ($rank < 10000) {
+              $action_output .= $rank . "\t" . $judge . "\t" . $results[$judge] . "\t" .$action->get_form() . "\t" . $ratio . "\n";
+              $r_str = $results[$judge];
+            } else {
+              $r_str = "&nbsp;";
+            }
+            print "<td>";
+            print $r_str;
             print "</td>";
           }
           print "</tr>";
@@ -174,10 +187,20 @@ if (!empty($event_text)) {
 </p>
 
 <p>
+評価結果（表計算ソフト入力用タブ区切り、ランク、判定、結果、提出能力、倍数）：<br/>
+<form method="GET" action="<?php print($_SERVER['PHP_SELF']) ?>">
+<textarea name="action_output" rows="4" cols="80">
+<?php print $action_output; ?>
+</textarea>
+</form>
+</p>
+<hr/>
+<p>
+以下入力：<br/>
 <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
 <input type="submit" name="submit" value="解析する">
 <br><br>
-現有戦力： ※現状ランクによる回数制限および合算には対応してません<br/>
+現有戦力： ※現状合算には対応してません<br/>
 <textarea name="action_text" rows="4" cols="80">
 <?php print $action_text; ?>
 </textarea>

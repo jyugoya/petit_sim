@@ -40,5 +40,12 @@ class PCAction {
   public function get_risk() {
     return $this->risk_;
   }
+
+  public function get_form() {
+    $form = $this->owner_ . "【" . $this->name_ . ":" . $this->rank_;
+    $form .= ":" . $this->tag_ . ":" . $this->power_ . ":" . $this->risk_ . "】";
+    return $form;
+
+  }
 }
 ?>
